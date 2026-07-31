@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import SalaryGrid, PayrollRun, Payslip
 
-# Register your models here.
+admin.site.register(SalaryGrid)
+admin.site.register(PayrollRun)
+admin.site.register(Payslip)

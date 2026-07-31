@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import WorkSchedule, Attendance
 
-# Register your models here.
+admin.site.register(WorkSchedule)
+admin.site.register(Attendance)

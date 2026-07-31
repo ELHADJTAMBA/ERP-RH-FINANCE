@@ -1,0 +1,77 @@
+name: Deploy Portfolio
+# 🔹 Nom du workflow, s'affiche dans l'interface GitHub Actions
+
+# Déclenche le workflow à chaque push sur la branche main
+on:
+  push:
+    branches:
+      - main
+# 🔹 Dès qu'un commit est poussé sur main, ce workflow s'exécute automatiquement
+
+jobs:
+  build-and-deploy:
+    # 🔹 Définition d'un job appelé "build-and-deploy"
+    runs-on: ubuntu-latest
+    # 🔹 Utilise un environnement Ubuntu pour exécuter toutes les étapes
+
+    steps:
+      # 1️⃣ Récupère le code source du repository
+      - uses: actions/checkout@v3
+      # 🔹 Clone le repo dans l'environnement runner pour que les étapes suivantes
+      # puissent accéder aux fichiers du projet.
+
+      # 2️⃣ Installe Node.js (ici version 20)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      # 🔹 Prépare Node.js dans le runner pour pouvoir exécuter npm, scripts et builds React
+
+      # 3️⃣ Installe les dépendances du projet
+      - name: Install dependencies
+        run: npm install
+      # 🔹 Installe tous les packages définis dans package.json pour que le projet fonctionne
+
+      # 4️⃣ Vérifie le code avec le linter
+      - name: Run Linter
+        run: npm run lint
+      # 🔹 Exécute le linter (eslint ou autre configuré) pour détecter les erreurs de code,
+      # incohérences ou mauvaises pratiques avant de builder
+
+      # 5️⃣ Vérifie la mise en forme avec Prettier
+      - name: Write Prettier formatting
+        run: npx prettier --write "src/**/*.{ts,tsx,js,jsx}"
+      # 🔹 S'assure que tous les fichiers TypeScript/JavaScript sont correctement formatés
+      # selon les règles Prettier. Évite les divergences de style.
+
+      # 6️⃣ Build du projet React pour la production
+      - name: Build project
+        if: success()
+        run: npm run build
+      # 🔹 Compile le projet React en version production dans le dossier "build"
+
+      # 7️⃣ Audit Lighthouse
+      - name: Run Lighthouse CI
+        run: npx lhci autorun
+      # 🔹 Vérifie la performance, accessibilité, SEO et meilleures pratiques
+      # de ton site web. ⚠️ Si le score est < 80%, cette étape peut échouer
+
+      # 8️⃣ Upload du rapport Lighthouse
+      - name: Upload Lighthouse Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/reports/*
+      # 🔹 Sauvegarde le rapport généré par Lighthouse dans GitHub Actions
+      # pour pouvoir le télécharger et le consulter même après l'exécution
+
+      # 9️⃣ Déploiement sur GitHub Pages
+      - name: Deploy to GitHub Pages
+        if: success()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+      # 🔹 Déploie automatiquement le contenu du dossier build sur la branche gh-pages
+      # 🔹 Le site sera accessible à l’adresse : https://<username>.github.io/<repository>/
+      # 🔹 Nécessite d’activer GitHub Pages sur la branche `gh-pages` dans les paramètres du dépôt
